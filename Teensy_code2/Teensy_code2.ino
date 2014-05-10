@@ -10,7 +10,7 @@
 #define SERVOPIN 20
 #define LEDPIN 6
 
-Servo servo; // create servo object to control a servo
+Servo servo;
 
 int ledState = 0;
 int irState = 0;
@@ -22,18 +22,18 @@ int servoPos = 90;
 int state = 1;
 
 void setup(){
-  Serial.begin(9600); // Begin Serial communication to display
-  Serial.println("Running Setup"); // Print LCD message
+  Serial.begin(9600);
+  Serial.println("Running Setup");
   
-  servo.attach(SERVOPIN); // attaches the servo on pin 20
+  servo.attach(SERVOPIN);
   
   //Inputs
-  pinMode(IRPIN, INPUT); // Infrared dollar sensor
-  pinMode(PHOTOPIN, INPUT); // detector to verify bill is being accepted
+  pinMode(IRPIN, INPUT);
+  pinMode(PHOTOPIN, INPUT);
   
 //Outputs
-  pinMode(BILLPIN, OUTPUT); // Motor output
-  pinMode(LEDPIN, OUTPUT);  // LED output
+  pinMode(BILLPIN, OUTPUT);
+  pinMode(LEDPIN, OUTPUT);
 }
 void loop(){
   int now = millis();
