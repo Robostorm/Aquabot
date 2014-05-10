@@ -1,6 +1,4 @@
-//Code by Ben Goldberg, Tim and Andrew Hollabaugh
-
-#include Servo.h
+#include <Servo.h>
 
 #define READY 0
 #define GETTING 1
@@ -10,6 +8,7 @@
 #define PHOTOPIN 22
 #define BILLPIN 25
 #define SERVOPIN 20
+#define LEDPIN 6
 
 Servo servo; // create servo object to control a servo
 
@@ -26,26 +25,25 @@ void setup(){
   Serial.begin(9600); // Begin Serial communication to display
   Serial.println("Running Setup"); // Print LCD message
   
-  servo.attach(servoPin); // attaches the servo on pin 20
+  servo.attach(SERVOPIN); // attaches the servo on pin 20
   
   //Inputs
-  pinMode(irPin, INPUT); // Infrared dollar sensor
-  pinMode(photoPin, INPUT); // detector to verify bill is being accepted
+  pinMode(IRPIN, INPUT); // Infrared dollar sensor
+  pinMode(PHOTOPIN, INPUT); // detector to verify bill is being accepted
   
 //Outputs
-  pinMode(billPin, OUTPUT); // Motor output
-  pinMode(ledPin, OUTPUT);  // LED output
-  
-  digitalWrite(led, HIGH);
+  pinMode(BILLPIN, OUTPUT); // Motor output
+  pinMode(LEDPIN, OUTPUT);  // LED output
 }
 void loop(){
   int now = millis();
   sensorUpdate(now);
   motorUpdate(now);
+  ledUpdate(now);
   Serial.println(state);
   switch(state){
     case READY:
-      if(irPin == 0){
+      if(IRPIN == 0){
         state = GETTING;
       }
       return;
@@ -74,21 +72,33 @@ void sensorUpdate(unsigned long now){
   static unsigned long sensorMillis = 0UL;
   
   if(now - sensorMillis >= 10UL){
-    irState = digitalRead(irPin);
-    photoState = digitalRead(photoPin);
-    sensorMillis = cur_millis;
+    irState = digitalRead(IRPIN);
+    photoState = digitalRead(PHOTOPIN);
+    sensorMillis = now;
   }
 }
 
 void motorUpdate(unsigned long now){
-  unsigned long cur_millis;
   static unsigned long motorMillis = 0UL;
-  static unsigned long servoMillis = 0UL;
   
   if(now - motorMillis >= 10UL){
-    analogWrite(billPin, billPower);
+    analogWrite(BILLPIN, billPower);
     servo.write(servoPos);
     motorMillis = now;
+  }
+}
+
+void ledUpdate(unsigned long now){
+  static unsigned long ledMillis = 0UL;
+  
+  if(now - ledMillis >= 1000UL){
+    if(ledState == HIGH){
+      ledState = LOW;
+    }else if(ledState == LOW) {
+      ledState = HIGH;
+    }
+    digitalWrite(LEDPIN, ledState);
+    ledMillis = now;
   }
 }
 
