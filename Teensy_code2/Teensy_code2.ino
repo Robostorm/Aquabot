@@ -1,91 +1,98 @@
-// Initial code by Derrick and Mike Rowe 04/26/2014
 //Code by Ben Goldberg, Tim and Andrew Hollabaugh
 
-//Pins taken 2,3,4,5,6,7,8,11,20
+#include Servo.h
 
-//Servo section
-#include <Servo.h>
+#define READY 0
+#define GETTING 1
+#define DISPENSING 2
+#define DONE 3
+#define IRPIN 23
+#define PHOTOPIN 22
+#define BILLPIN 25
+#define SERVOPIN 20
 
-#define WAITING 0; //Waiting for bill
-#define GETTING_BILL 1; //Brining bill in
-#define DISPENSING_BOTTLE 2; //Dispensing Bottle
-#define DONE 3; //Any finishing code
+Servo servo; // create servo object to control a servo
 
-Servo myservo; // create servo object to control a servo
-int pos = 0; // variable to store the servo position
+int ledState = 0;
+int irState = 0;
+int photoState = 0;
 
-int led = 6; //Teensy has LED on a different pin
-int ir = 23;
-int photo = 22;
-int bill = 25;
-int isBill = 0;
+int billPower = 0;
+int servoPos = 90;
+
 int state = 1;
 
-
-void setup() {
-  myservo.attach(20); // attaches the servo on pin 20
-  
+void setup(){
   Serial.begin(9600); // Begin Serial communication to display
-  Serial.println("Place dollar bill into robot where indicated"); // Print LCD message
+  Serial.println("Running Setup"); // Print LCD message
   
-//Inputs
-  pinMode(ir, INPUT); // Infrared dollar sensor
-  pinMode(photo, INPUT); // detector to verify bill is being accepted
+  servo.attach(servoPin); // attaches the servo on pin 20
+  
+  //Inputs
+  pinMode(irPin, INPUT); // Infrared dollar sensor
+  pinMode(photoPin, INPUT); // detector to verify bill is being accepted
   
 //Outputs
-  pinMode(bill, OUTPUT); // Motor output
-  pinMode(led, OUTPUT);  // LED output
+  pinMode(billPin, OUTPUT); // Motor output
+  pinMode(ledPin, OUTPUT);  // LED output
   
   digitalWrite(led, HIGH);
 }
- 
- 
-void loop()
-{
-  TimerUpdate();
+void loop(){
+  int now = millis();
+  sensorUpdate(now);
+  motorUpdate(now);
+  Serial.println(state);
+  switch(state){
+    case READY:
+      if(irPin == 0){
+        state = GETTING;
+      }
+      return;
+    case GETTING:
+      billPower = 255;
+      if(PHOTOPIN == HIGH) {
+        state = DISPENSING;
+      }
+      return;
+    case DISPENSING:
+      if(PHOTOPIN == HIGH){
+        return;
+      }
+      billPower = 0;
+      dispense();
+      state = DONE;
+      return;
+    case DONE:
+      Serial.println("Thank you and have a nice day.");
+      state = READY;
+    return;
+  }
 }
 
-void TimerUpdate(){
-  unsigned long cur_millis;
-  static unsigned long BillMillis = 0UL;
-  static unsigned long ServoMillis = 0UL;
+void sensorUpdate(unsigned long now){
+  static unsigned long sensorMillis = 0UL;
   
-  cur_millis = millis();
-  if(cur_millis - BillMillis >= 10UL){
-    BillUpdate();
-    BillMillis = cur_millis;
-  }
-  if(cur_millis - ServoMillis >= 10UL){
-    ServoUpdate();
-    ServoMillis = cur_millis;
+  if(now - sensorMillis >= 10UL){
+    irState = digitalRead(irPin);
+    photoState = digitalRead(photoPin);
+    sensorMillis = cur_millis;
   }
 }
 
-void BillUpdate(){
-  if (digitalRead(ir) == LOW) {
-    analogWrite(bill, 255);
-    delay(2000);
-    if (digitalRead(photo) == HIGH) {
-      while (photo == HIGH) {
-    }
-    analogWrite(bill, 0);
-    Serial.println("Thank You");
-    isBill = 1;
-  } else {
-    analogWrite(bill, 0);
-    Serial.println("No Bill Detected");
-    isBill = 0;
+void motorUpdate(unsigned long now){
+  unsigned long cur_millis;
+  static unsigned long motorMillis = 0UL;
+  static unsigned long servoMillis = 0UL;
+  
+  if(now - motorMillis >= 10UL){
+    analogWrite(billPin, billPower);
+    servo.write(servoPos);
+    motorMillis = now;
   }
 }
- 
-/*
-for (pos = 5; pos < 85; pos++){ // goes from 5-85 degrees in steps of 1 degree
-  myservo.write(pos); // tell servo to go to position in variable 'pos'
-  delay(200); // waits 200ms for the servo to reach the position
-}
-for (pos = 85; pos > 5; pos--){ // goes from 85-5 degrees in steps of 1 degree
-  myservo.write(pos); // tell servo to go to position in variable 'pos'
-  delay(200); // waits 200ms for the servo to reach the position
-}
-*/
+
+void dispense(){
+  for (servoPos = 5; servoPos < 85; servoPos++){}
+  for (servoPos = 85; servoPos > 5; servoPos--){}
 }
