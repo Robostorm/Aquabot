@@ -23,18 +23,18 @@ void setup() {
 
 void loop() {
   if (digitalRead(ir) == 0) {
-    Serial.println("IR 0")
+    Serial.println("IR 0");
   }
   
   if (digitalRead(ir) == 1) {
-    Serial.println("IR 1")
+    Serial.println("IR 1");
   }
   
   if (digitalRead(photo) == 0) {
-    Serial.println("Photo 0")
+    Serial.println("Photo 0");
   }
   
   if (digitalRead(photo) == 1) {
-    Serial.println("Photo 1")
+    Serial.println("Photo 1");
   }
 }
