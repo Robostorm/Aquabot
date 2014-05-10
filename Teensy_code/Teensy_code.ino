@@ -34,7 +34,7 @@ void setup() {
  
  
 void loop() {
-  if (digitalRead(ir) == LOW) {
+  if (digitalRead(ir) == HIGH) {
     analogWrite(bill, 255);
     delay(2000);
     if (digitalRead(photo) == HIGH) {
