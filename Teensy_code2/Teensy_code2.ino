@@ -1,13 +1,17 @@
+//https://github.com/zethra/aquqbot2
 #include <Servo.h>
+//#include <toneAC.h>
+#include "pitches.h"
 
 #define READY 0
 #define GETTING 1
 #define DISPENSING 2
 #define DONE 3
+
 #define IRPIN 23
 #define PHOTOPIN 22
-#define BILLPIN 25
-#define SERVOPIN 20
+#define BILLPIN 24
+#define SERVOPIN 26
 #define LEDPIN 6
 
 Servo servo;
@@ -17,9 +21,14 @@ int irState = 0;
 int photoState = 0;
 
 int billPower = 0;
-int servoPos = 90;
+int servoPos = 45;
 
-int state = 1;
+int servoState = 0;
+int servoWait = 0;
+
+int state = 0;
+
+char* actionText;
 
 void setup(){
   Serial.begin(9600);
@@ -31,40 +40,50 @@ void setup(){
   pinMode(IRPIN, INPUT);
   pinMode(PHOTOPIN, INPUT);
   
-//Outputs
+  //Outputs
   pinMode(BILLPIN, OUTPUT);
   pinMode(LEDPIN, OUTPUT);
+  
 }
+
 void loop(){
-  int now = millis();
+  unsigned long now = millis();
   sensorUpdate(now);
   motorUpdate(now);
   ledUpdate(now);
-  Serial.println(state);
+  printUpdate(now);
+  //Serial.println(state);
   switch(state){
     case READY:
-      if(IRPIN == 0){
+      if(irState == LOW){
         state = GETTING;
       }
+      actionText = "Ready.";
+      servoState = 0;
+      servoWait = 0;
       return;
     case GETTING:
       billPower = 255;
-      if(PHOTOPIN == HIGH) {
+      if(photoState == HIGH) {
         state = DISPENSING;
       }
+      actionText = "Bill Detected";
       return;
     case DISPENSING:
-      if(PHOTOPIN == HIGH){
+      if(photoState == HIGH){
+        actionText = "Waiting for Bill";
         return;
+      }else{
+        billPower = 0;
+        dispense(now);
       }
-      billPower = 0;
-      dispense();
-      state = DONE;
       return;
+        
     case DONE:
       Serial.println("Thank you and have a nice day.");
+      //toneAC(300);
       state = READY;
-    return;
+      return;
   }
 }
 
@@ -102,7 +121,67 @@ void ledUpdate(unsigned long now){
   }
 }
 
-void dispense(){
-  for (servoPos = 5; servoPos < 85; servoPos++){}
-  for (servoPos = 85; servoPos > 5; servoPos--){}
+void printUpdate(unsigned long now){
+  static unsigned long printMillis = 0UL;
+  
+  if(now - printMillis >= 10UL){
+    Serial.print("State: ");
+    Serial.print(state);
+    Serial.print(" | IR State: ");
+    Serial.print(irState);
+    Serial.print(" | Photo State: ");
+    Serial.print(photoState);
+    Serial.print(" | Motor Power: ");
+    Serial.print(billPower);
+    Serial.print(" | Servo Position: ");
+    Serial.print(servoPos);
+    Serial.print(" | Led State: ");
+    Serial.print(ledState);
+    Serial.print(" | Action: ");
+    Serial.print(actionText);
+    Serial.println();
+    printMillis = now;
+  }
+}
+
+void dispense(unsigned long now){
+  //for (servoPos = 5; servoPos < 85; servoPos++){}
+  //for (servoPos = 85; servoPos > 5; servoPos--){}
+  
+  static unsigned long servoMillis = 0UL;
+  
+  if(now - servoMillis >= 10UL){
+    
+    sprintf(actionText, "Dispensing: ""%d", servoState);
+    
+    if(servoState == 0){
+      if(servoPos < 135){
+        servoPos++;
+      }else{
+        servoState = 1;
+      }
+    }
+    
+    if(servoState == 1){
+      if(servoWait < 40){
+        servoWait++;
+      }else{
+        servoState = 2;
+      }
+    }
+    
+    if(servoState == 2){
+      if(servoPos > 45){
+        servoPos--;
+      }else{
+        servoState = 3;
+      }
+    }
+    
+    if(servoState == 3){
+      state = DONE;
+    }
+    servoMillis = now;
+  }
+  
 }
