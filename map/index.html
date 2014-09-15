@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>AquaBot Locator</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <style>
+      html, body, #map-canvas {
+        height: 100%;
+        margin: 0px;
+        padding: 0px
+      }
+    </style>
+    <script src="jquery.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+    <script>
+var map;
+var marker
+var ll
+function get(){
+	$.ajax({url:"get.php"}).done(function(data){
+		ll = data.split(',')
+		if(data && data != "" && data != '""'){
+			marker.setPosition( new google.maps.LatLng( ll[0], ll[1] ) );
+		}
+	});
+}
+
+function initialize() {
+  var myLatlng = new google.maps.LatLng(40.415408, -74.882153);
+  var mapOptions = {
+    zoom: 18,
+    center: myLatlng,
+	disableDefaultUI: true,
+	mapTypeId: google.maps.MapTypeId.SATELLITE,
+	draggable: false,
+	zoomControl: false,
+	scrollwheel: false,
+	disableDoubleClickZoom: true
+  }
+  var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+  //map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
+  point = new google.maps.LatLng(40.415097, -74.879728)
+  marker = new google.maps.Marker({
+      position: point,
+      map: map,
+      title: 'AquaBot'
+  });
+}
+
+google.maps.event.addDomListener(window, 'load', initialize);
+
+$(document).ready(function(e) {
+    get();
+    setInterval(get, 1000);
+});
+    </script>
+  </head>
+  <body>
+    <div id="map-canvas"></div>
+  </body>
+</html>
