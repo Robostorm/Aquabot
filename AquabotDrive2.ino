@@ -2,6 +2,7 @@
 
 #define ALILE 1
 #define ELEV 0
+#define BUTTON 13
 
 #define LEFTMOTOR 5
 #define RIGHTMOTOR 6
@@ -16,6 +17,8 @@
 #define ELEVZMIN 2000
 #define ELEVDEAD 100
 
+boolean enabled = false;
+int stillTime = 0;
 int time = 0;
 int printTime = 0;
 int alie = 0;
@@ -33,6 +36,7 @@ void setup() {
   rightServo.attach(RIGHTMOTOR);
   pinMode(ALILE, INPUT);
   pinMode(ELEV, INPUT);
+  pinMode(BUTTON, INPUT);
   Serial.begin(9600);
   attachInterrupt(ALILE, alieRising, RISING);
   attachInterrupt(ELEV, elevRising, RISING);
@@ -45,20 +49,36 @@ void loop() {
   if (time - printTime >= 100) {
     Serial.print(alie);
     Serial.print(" : ");
-    Serial.println(elev);
+    Serial.print(elev);
+    Serial.print(" : ");
+    Serial.println(pulseIn(BUTTON, HIGH));
     printTime = time;
   }
   
   //motors
-  if (alie < 1500 - ALILEDEAD || alie > 1500 + ALILEDEAD) {
-    leftServo.write(map(alie, 1000, 2000, 0, 180));
-  } else {
-    leftServo.write(90);
+  if(enabled) {
+    if (alie < 1500 - ALILEDEAD || alie > 1500 + ALILEDEAD) {
+      leftServo.write(map(alie, 1000, 2000, 0, 180));
+      stillTime = time;
+    } else {
+      leftServo.write(90);
+    }
+    if (elev < 1500 - ELEVDEAD || elev > 1500 + ELEVDEAD) {
+      rightServo.write(map(elev, 1000, 2000, 0, 180));
+    }  else {
+      rightServo.write(90);
+    }
   }
-  if (elev < 1500 - ELEVDEAD || elev > 1500 + ELEVDEAD) {
-    rightServo.write(map(elev, 1000, 2000, 0, 180));
-  }  else {
+  
+  //safty
+  if(time - stillTime >= 5000) {
+    enabled = false;
+    leftServo.write(90);
     rightServo.write(90);
+  }
+  
+  if(pulseIn(BUTTON, HIGH) > 1500) {
+    enabled = true;
   }
 }
 
