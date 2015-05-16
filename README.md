@@ -1,4 +1,4 @@
-aquqbot2
+Aquabot2
 ========
 
 Code for aquabot
