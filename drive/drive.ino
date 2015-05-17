@@ -58,13 +58,13 @@ void loop() {
   //motors
   if(enabled) {
     if (alie < 1500 - ALILEDEAD || alie > 1500 + ALILEDEAD) {
-      leftServo.write(map(alie, 1000, 2000, 0, 180));
+      leftServo.writeMicroseconds(alie);
       stillTime = time;
     } else {
       leftServo.write(90);
     }
     if (elev < 1500 - ELEVDEAD || elev > 1500 + ELEVDEAD) {
-      rightServo.write(map(elev, 1000, 2000, 0, 180));
+      rightServo.writeMicroseconds(elev);
     }  else {
       rightServo.write(90);
     }
